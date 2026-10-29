@@ -5,6 +5,14 @@
   "keywords": ["electron", "storekit", "storekit2", "in-app-purchase", "mac-app-store", "macos", "iap"],
   "license": "MIT",
   "author": "Can Undeger",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/insacc/electron-storekit.git"
+  },
+  "homepage": "https://github.com/insacc/electron-storekit#readme",
+  "bugs": {
+    "url": "https://github.com/insacc/electron-storekit/issues"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist", "native", "swift", "scripts/buildSwift.sh", "binding.gyp", "prebuilds"],
