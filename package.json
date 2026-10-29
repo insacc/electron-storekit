@@ -1,0 +1,33 @@
+{
+  "name": "electron-storekit",
+  "version": "0.1.0",
+  "description": "StoreKit 2 in-app purchases for Electron and Node on macOS: products, purchases, transaction updates and signed JWS transactions.",
+  "keywords": ["electron", "storekit", "storekit2", "in-app-purchase", "mac-app-store", "macos", "iap"],
+  "license": "MIT",
+  "author": "Can Undeger",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "native", "swift", "scripts/buildSwift.sh", "binding.gyp", "prebuilds"],
+  "os": ["darwin"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "install": "node-gyp-build",
+    "build:native": "node-gyp rebuild",
+    "build:ts": "tsc",
+    "build": "npm run build:native && npm run build:ts",
+    "prebuilds": "prebuildify --napi --strip --arch arm64 && prebuildify --napi --strip --arch x64",
+    "test": "npm run build:ts && node --test 'test/*.test.js'"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.0.0",
+    "node-gyp-build": "^4.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "node-gyp": "^11.0.0",
+    "prebuildify": "^6.0.0",
+    "typescript": "^5.6.0"
+  }
+}

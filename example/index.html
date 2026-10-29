@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'" />
+    <title>electron-storekit example</title>
+    <style>
+      body { font: 14px -apple-system, sans-serif; padding: 16px; }
+      li { margin: 6px 0; }
+      pre { background: #f3f3f3; padding: 8px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h1>Products</h1>
+    <ul id="products"></ul>
+    <button id="restore">Restore purchases</button>
+    <pre id="log"></pre>
+    <script>
+      const log = (value) => {
+        document.getElementById('log').textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+      };
+
+      async function load() {
+        try {
+          const products = await window.store.products();
+          const list = document.getElementById('products');
+          list.replaceChildren(...products.map((product) => {
+            const item = document.createElement('li');
+            const button = document.createElement('button');
+            button.textContent = `Buy ${product.displayName} (${product.displayPrice})`;
+            button.onclick = () => window.store.purchase(product.id).then(log, (error) => log(error.message));
+            item.append(button);
+            return item;
+          }));
+          if (products.length === 0) log('No products. Set PRODUCT_IDS and run a signed build.');
+        } catch (error) {
+          log(error.message);
+        }
+      }
+
+      document.getElementById('restore').onclick = () => window.store.restore().then(log, (error) => log(error.message));
+      load();
+    </script>
+  </body>
+</html>
