@@ -30,9 +30,9 @@ export interface Product {
   displayPrice: string;
   /** Decimal price as a string, so no precision is lost. */
   price: string;
-  currencyCode: string | null;
-  subscriptionGroupId: string | null;
-  subscriptionPeriod: SubscriptionPeriod | null;
+  currencyCode?: string | null;
+  subscriptionGroupId?: string | null;
+  subscriptionPeriod?: SubscriptionPeriod | null;
 }
 
 export interface Transaction {
@@ -47,11 +47,11 @@ export interface Transaction {
   /** ISO 8601. */
   purchaseDate: string;
   originalPurchaseDate: string;
-  expirationDate: string | null;
-  revocationDate: string | null;
+  expirationDate?: string | null;
+  revocationDate?: string | null;
   isUpgraded: boolean;
   /** Lowercase UUID, when the purchase carried one. */
-  appAccountToken: string | null;
+  appAccountToken?: string | null;
   /** `Production`, `Sandbox` or `Xcode`. */
   environment: string;
 }
@@ -68,7 +68,7 @@ export interface PurchaseResult {
   outcome: PurchaseOutcome;
   /** Present when `outcome` is `Purchased`. Finish it once you have
    * delivered what was bought. */
-  transaction: Transaction | null;
+  transaction?: Transaction | null;
 }
 
 export interface PurchaseOptions {
@@ -81,6 +81,9 @@ export enum StoreKitErrorCode {
   InvalidArgument = 'invalidArgument',
   ProductNotFound = 'productNotFound',
   TransactionNotFound = 'transactionNotFound',
+  Cancelled = 'cancelled',
+  NotAllowed = 'notAllowed',
+  NetworkError = 'networkError',
   StoreKit = 'storeKit',
   UnsupportedPlatform = 'unsupportedPlatform',
 }

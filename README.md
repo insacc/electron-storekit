@@ -75,3 +75,17 @@ Needs Xcode 15+ (Swift 5.9+). `npm run build` compiles the Swift bridge (`swift/
 ## License
 
 MIT
+
+## Fork integration notes
+
+This fork retains upstream's StoreKit 2 API and adds Git-install TypeScript
+preparation, concurrent unfinished replay/live updates, native listener cleanup
+on Node/Electron environment shutdown, listener-start retry handling, and typed
+cancellation/payment-restriction/network errors. Optional Swift JSON fields are
+optional in the TypeScript declarations as well.
+
+The bridge uses Node-API and requires macOS 13 or later. Building from a pinned
+Git commit requires Xcode/Swift and the normal Node native build prerequisites.
+Smoke tests outside a signed bundle validate compilation, argument/error
+round-trips and cleanup, not real purchases, restores, renewals or Apple account
+behavior. Those still require a signed app and sandbox acceptance testing.

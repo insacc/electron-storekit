@@ -104,12 +104,17 @@ export function onTransaction(listener: TransactionListener): () => void {
   const addon = native();
   listeners.add(listener);
   if (listeners.size === 1) {
-    addon.listen((json) => {
-      const transaction = JSON.parse(json) as Transaction;
-      for (const subscriber of listeners) {
-        subscriber(transaction);
-      }
-    });
+    try {
+      addon.listen((json) => {
+        const transaction = JSON.parse(json) as Transaction;
+        for (const subscriber of listeners) {
+          subscriber(transaction);
+        }
+      });
+    } catch (error) {
+      listeners.delete(listener);
+      throw toStoreKitError(error);
+    }
   }
   return () => {
     if (listeners.delete(listener) && listeners.size === 0) {

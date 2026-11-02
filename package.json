@@ -25,6 +25,7 @@
     "build:native": "node-gyp rebuild",
     "build:ts": "tsc",
     "build": "npm run build:native && npm run build:ts",
+    "prepare": "npm run build:ts",
     "prebuilds": "prebuildify --napi --strip --arch arm64 && prebuildify --napi --strip --arch x64",
     "test": "npm run build:ts && node --test 'test/*.test.js'",
     "prepublishOnly": "npm run build:ts && npm run prebuilds"
