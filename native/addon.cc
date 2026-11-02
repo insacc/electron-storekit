@@ -29,7 +29,7 @@ void SettleRequest(void *context, const char *json, const char *error) {
   auto *request = static_cast<Request *>(context);
   auto *reply = new Reply{json ? json : "", error ? error : "", error != nullptr};
   Napi::ThreadSafeFunction function = request->function;
-  function.BlockingCall(reply, [request](Napi::Env env, Napi::Function, Reply *reply) {
+  const auto status = function.BlockingCall(reply, [request](Napi::Env env, Napi::Function, Reply *reply) {
     if (reply->failed) {
       auto rejection = Napi::Error::New(env, "StoreKit bridge error");
       rejection.Set("payload", Napi::String::New(env, reply->error));
@@ -40,7 +40,12 @@ void SettleRequest(void *context, const char *json, const char *error) {
     delete reply;
     delete request;
   });
-  function.Release();
+  if (status == napi_ok) {
+    function.Release();
+  } else {
+    delete reply;
+    delete request;
+  }
 }
 
 // Builds the request a Swift call settles; the caller passes it as context.
@@ -106,10 +111,11 @@ void DeliverTransaction(void *, const char *json, const char *) {
     return;
   }
   auto *payload = new std::string(json);
-  listener.BlockingCall(payload, [](Napi::Env env, Napi::Function callback, std::string *payload) {
+  const auto status = listener.BlockingCall(payload, [](Napi::Env env, Napi::Function callback, std::string *payload) {
     callback.Call({Napi::String::New(env, *payload)});
     delete payload;
   });
+  if (status != napi_ok) delete payload;
 }
 
 void StopListening() {
@@ -143,6 +149,7 @@ Napi::Value StopListeningBinding(const Napi::CallbackInfo &info) {
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  env.AddCleanupHook([]() { StopListening(); });
   exports.Set("products", Napi::Function::New(env, Products));
   exports.Set("purchase", Napi::Function::New(env, Purchase));
   exports.Set("finish", Napi::Function::New(env, Finish));

@@ -13,6 +13,9 @@ enum BridgeErrorCode: String, Encodable {
     case invalidArgument
     case productNotFound
     case transactionNotFound
+    case cancelled
+    case notAllowed
+    case networkError
     case storeKit
 }
 
@@ -37,8 +40,25 @@ struct Reply: @unchecked Sendable {
     }
 
     func fail(_ error: Error) {
+        let code: BridgeErrorCode
+        if let storeError = error as? StoreKitError {
+            switch storeError {
+            case .userCancelled: code = .cancelled
+            case .networkError: code = .networkError
+            default: code = .storeKit
+            }
+        } else if let storeError = error as? SKError {
+            switch storeError.code {
+            case .paymentCancelled: code = .cancelled
+            case .paymentNotAllowed: code = .notAllowed
+            case .cloudServiceNetworkConnectionFailed: code = .networkError
+            default: code = .storeKit
+            }
+        } else {
+            code = (error as NSError).domain == NSURLErrorDomain ? .networkError : .storeKit
+        }
         let bridgeError = error as? BridgeError
-            ?? BridgeError(code: .storeKit, message: error.localizedDescription)
+            ?? BridgeError(code: code, message: error.localizedDescription)
         let data = (try? JSONEncoder.bridge.encode(bridgeError)) ?? Data("{}".utf8)
         String(decoding: data, as: UTF8.self).withCString { callback(context, nil, $0) }
     }
@@ -114,7 +134,7 @@ public func storekitPurchase(
         case .userCancelled:
             return PurchasePayload(outcome: .cancelled, transaction: nil)
         @unknown default:
-            return PurchasePayload(outcome: .cancelled, transaction: nil)
+            throw BridgeError(code: .storeKit, message: "Unsupported StoreKit purchase outcome")
         }
     }
 }
@@ -161,20 +181,26 @@ public func storekitSync(
     }
 }
 
-/// Starts delivering `Transaction.unfinished`, then `Transaction.updates`,
+/// Replays `Transaction.unfinished` while listening to `Transaction.updates`,
 /// one reply per transaction, until `storekit_stop_listening`. A second call
 /// replaces the first listener.
 @_cdecl("storekit_listen")
 public func storekitListen(_ callback: StoreKitReply) {
     let reply = Reply(context: nil, callback: callback)
     Listener.shared.start {
-        for await verification in Transaction.unfinished {
-            guard !Task.isCancelled else { return }
-            reply.succeed(await TransactionStore.shared.remember(verification))
-        }
-        for await verification in Transaction.updates {
-            guard !Task.isCancelled else { return }
-            reply.succeed(await TransactionStore.shared.remember(verification))
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                for await verification in Transaction.updates {
+                    guard !Task.isCancelled else { return }
+                    reply.succeed(await TransactionStore.shared.remember(verification))
+                }
+            }
+            group.addTask {
+                for await verification in Transaction.unfinished {
+                    guard !Task.isCancelled else { return }
+                    reply.succeed(await TransactionStore.shared.remember(verification))
+                }
+            }
         }
     }
 }
