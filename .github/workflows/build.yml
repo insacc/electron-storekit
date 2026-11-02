@@ -15,6 +15,7 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run build
+      - run: git diff --exit-code -- dist
       - run: npm test
       - run: npm run prebuilds
       - uses: actions/upload-artifact@v4

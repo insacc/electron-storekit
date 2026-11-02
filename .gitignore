@@ -1,6 +1,5 @@
 node_modules/
 build/
-dist/
 prebuilds/
 example/node_modules/
 .DS_Store
